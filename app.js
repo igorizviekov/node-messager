@@ -1,0 +1,45 @@
+const express = require("express");
+const feedRoutes = require("./routes/feed");
+const authRoutes = require("./routes/auth");
+const bodyParser = require("body-parser");
+const keys = require("./data/keys");
+const app = express();
+const mongoose = require("mongoose");
+const fileHelper = require("./helpers/file");
+const multer = require("multer"); //image download
+const path = require("path");
+//allow to share data to another servers
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE"
+  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
+
+app.use("/assets", express.static(path.join(__dirname, "assets"))); //public folder for images
+app.use(bodyParser.json());
+//configure file upload
+app.use(
+  multer({
+    storage: fileHelper.fileStorage,
+    fileFilter: fileHelper.fileFilter
+  }).single("image")
+);
+app.use("/", feedRoutes);
+app.use("/auth", authRoutes);
+
+mongoose
+  .connect(
+    `mongodb+srv://igorizviekov:${keys.password}@nodepractice-fv2cp.mongodb.net/${keys.database}?retryWrites=true&w=majority`,
+    {
+      useFindAndModify: false,
+      useCreateIndex: true,
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }
+  )
+  .then(() => app.listen(3000))
+  .catch(err => console.log(err));

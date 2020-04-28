@@ -2,6 +2,7 @@ const User = require("../models/user");
 const { validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const keys = require("../data/keys");
 
 exports.postLogin = (req, res, next) => {
   const password = req.body.password;
@@ -11,9 +12,9 @@ exports.postLogin = (req, res, next) => {
     .then(user => {
       //if no such email
       if (!user) {
-        return res.status(401).json({
-          message: "No such email."
-        });
+        const error = new Error("No  such email");
+        error.statusCode = 401;
+        throw error;
       }
       loadedUser = user;
       return bcrypt.compare(password, user.password);
@@ -21,9 +22,9 @@ exports.postLogin = (req, res, next) => {
     .then(isEqual => {
       //if the password doesn't match
       if (!isEqual) {
-        return res.status(401).json({
-          message: "No such password."
-        });
+        const error = new Error("No such password");
+        error.statusCode = 401;
+        throw error;
       }
       //configure token
       const token = jwt.sign(
@@ -31,7 +32,7 @@ exports.postLogin = (req, res, next) => {
           userId: loadedUser._id,
           email: loadedUser.email
         },
-        "someLongSecretString",
+        keys.secret,
         { expiresIn: "1h" }
       );
 
@@ -41,7 +42,7 @@ exports.postLogin = (req, res, next) => {
         userId: loadedUser._id.toString()
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => next(err));
 };
 
 exports.postSignUP = (req, res, next) => {
@@ -51,10 +52,9 @@ exports.postSignUP = (req, res, next) => {
   const error = validationResult(req);
   //validate
   if (!error.isEmpty()) {
-    return res.status(422).json({
-      message: "Validation failed.",
-      errors: error.array()
-    });
+    const error = new Error("Validation failed");
+    error.statusCode = 422;
+    throw error;
   }
   bcrypt
     .hash(password, 12)
@@ -69,5 +69,5 @@ exports.postSignUP = (req, res, next) => {
     .then(result => {
       res.status(201).json({ message: "User Created.", userId: result._id });
     })
-    .catch(err => console.log(err));
+    .catch(err => next(err));
 };

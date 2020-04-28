@@ -31,15 +31,21 @@ app.use(
 app.use("/", feedRoutes);
 app.use("/auth", authRoutes);
 
+app.use((error, req, res, next) => {
+  console.log(error);
+  const status = error.statusCode || 500;
+  const message = error.message;
+  res.status(status).json({ message: message });
+});
+
 mongoose
-  .connect(
-    `mongodb+srv://igorizviekov:${keys.password}@nodepractice-fv2cp.mongodb.net/${keys.database}?retryWrites=true&w=majority`,
-    {
-      useFindAndModify: false,
-      useCreateIndex: true,
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    }
-  )
-  .then(() => app.listen(3000))
+  .connect(keys.database, {
+    useFindAndModify: false,
+    useCreateIndex: true,
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => {
+    app.listen(3000);
+  })
   .catch(err => console.log(err));

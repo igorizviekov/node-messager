@@ -23,7 +23,7 @@ exports.getFeed = (req, res, next) => {
         totalNum
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => next(err));
 };
 
 exports.postPost = async (req, res, next) => {
@@ -34,10 +34,9 @@ exports.postPost = async (req, res, next) => {
   let creator;
   //validate
   if (!error.isEmpty() || !image) {
-    return res.status(422).json({
-      message: "Validation failed.",
-      errors: error.array()
-    });
+    const error = new Error("Validation failed");
+    error.statusCode = 422;
+    throw error;
   }
   const post = new Post({
     title: title,
@@ -45,8 +44,8 @@ exports.postPost = async (req, res, next) => {
     imageURL: image.path,
     creator: req.userId
   });
-  post.save();
   try {
+    await post.save();
     const user = await User.findById(req.userId);
     creator = user;
     user.posts.push(post);
@@ -57,7 +56,7 @@ exports.postPost = async (req, res, next) => {
       creator: { _id: creator._id, name: creator.name }
     });
   } catch (error) {
-    console.log(error);
+    next(error);
   }
 };
 
@@ -69,10 +68,9 @@ exports.postUpdatePost = async (req, res, next) => {
   const error = validationResult(req);
   //validate
   if (!error.isEmpty()) {
-    return res.status(422).json({
-      message: "Validation failed.",
-      errors: error.array()
-    });
+    const error = new Error("Validation failed");
+    error.statusCode = 422;
+    throw error;
   }
   try {
     //save if valid
@@ -87,12 +85,12 @@ exports.postUpdatePost = async (req, res, next) => {
       //save new path
       post.imageURL = image.path;
     }
-    post.save();
+    await post.save();
     res.status(200).json({
       message: "Update Success"
     });
   } catch (error) {
-    console.log(error);
+    next(error);
   }
 };
 
@@ -113,5 +111,5 @@ exports.deletePost = (req, res, next) => {
         message: "Delete Success"
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => next(err));
 };

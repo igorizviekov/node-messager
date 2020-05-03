@@ -2,7 +2,6 @@ const User = require("../models/user");
 const { validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const keys = require("../data/keys");
 
 exports.postLogin = (req, res, next) => {
   const password = req.body.password;
@@ -32,7 +31,7 @@ exports.postLogin = (req, res, next) => {
           userId: loadedUser._id,
           email: loadedUser.email
         },
-        keys.secret,
+        `${process.env.SECRET}`,
         { expiresIn: "1h" }
       );
 

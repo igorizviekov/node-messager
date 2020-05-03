@@ -2,12 +2,12 @@ const express = require("express");
 const feedRoutes = require("./routes/feed");
 const authRoutes = require("./routes/auth");
 const bodyParser = require("body-parser");
-const keys = require("./data/keys");
 const app = express();
 const mongoose = require("mongoose");
 const fileHelper = require("./helpers/file");
 const multer = require("multer"); //image download
 const path = require("path");
+require("dotenv").config();
 //allow to share data to another servers
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -39,7 +39,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-  .connect(keys.database, {
+  .connect(`${process.env.MONGO_DB_API}`, {
     useFindAndModify: false,
     useCreateIndex: true,
     useNewUrlParser: true,
